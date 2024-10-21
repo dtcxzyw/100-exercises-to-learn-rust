@@ -9,6 +9,7 @@ use crate::status::Status;
 // The module file should be placed in the same directory as the file that declares the module.
 // In this case, `src/lib.rs`, thus `status.rs` should be placed in the `src` directory.
 mod status;
+use status::ParseStatusError;
 
 // TODO: Add a new error variant to `TicketNewError` for when the status string is invalid.
 //   When calling `source` on an error of that variant, it should return a `ParseStatusError` rather than `None`.
@@ -23,6 +24,8 @@ pub enum TicketNewError {
     DescriptionCannotBeEmpty,
     #[error("Description cannot be longer than 500 bytes")]
     DescriptionTooLong,
+    #[error("{source}")]
+    StatusError{source: ParseStatusError},
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -48,6 +51,10 @@ impl Ticket {
         }
 
         // TODO: Parse the status string into a `Status` enum.
+        let status : Status = match Status::try_from(status) {
+            Ok(status) => status,
+            Err(err) => { return Err(TicketNewError::StatusError { source: err }); }
+        };
 
         Ok(Ticket {
             title,
